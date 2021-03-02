@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Created:         Mi 2021-02-17 21:23:22 CET
-# Last Modified:   Do 2021-02-18 00:56:15 CET
+# Last Modified:   Mo 2021-02-22 01:03:33 CET
 #
 # bingdaily:
 #   Downloads the daily Bing wallpaper
@@ -15,11 +15,11 @@ Usage: bingdaily [options]
 This script will download the daily Bing wallpaper.
 
 OPTIONS:
-   -C DIR         Change directory
+   -p PATH        Select download location
    -m MARKET      Select market (default: de-DE)
    -d DAY         Select day (default: 0=current, 1=yesterday, ...)
    -r RESOLUTION  Select image resolution (default: UHD)
-   -y             Overwrite existing files
+   -y             Create output directories and files without asking
    -h             Show this message
 EOF
 }
@@ -37,14 +37,14 @@ MARKET="de-DE"
 OUTDIR="$(xdg-user-dir PICTURES)/Bing"
 
 # For day (0=current; 1=yesterday... so on)
-DAY="0"
+DAY=0
 
 # Process options
-while getopts C:m:d:r:yh OPTION
+while getopts p:m:d:r:yh OPTION
 do
     case "${OPTION}"
     in
-        C)  OUTDIR=${OPTARG}
+        p)  OUTDIR=${OPTARG}
             ;;
         y)  YES=1
             ;;
@@ -77,13 +77,12 @@ BING=${BING%/}
 OUTDIR=${OUTDIR%/}
 
 # Fetch Bing metainfo
-echo "Pinging Bing API ... "
 RESP=$(wget --quiet --output-document=- "${BING}/${API}")
 ecode=$?
 if [ "$ecode" -gt 0 ]
 then
     echo "No connection to ${BING}"
-    exit 1
+    exit 2
 fi
 
 # Fetch image URL
@@ -113,27 +112,57 @@ FILENAME=${FILENAME%&rf=*}
 FILENAME=${STARTDATE}-${FILENAME}
 
 # Logging.
-echo "Bing Image of the Day: ${TITLE}"
+echo "Title: ${TITLE}"
 echo "URL: ${FILEURL}"
 
 # Create output directory
 if [ ! -d "${OUTDIR}" ]
 then
-    echo "Creating output directory ${OUTDIR} ..."
+
+    # Interactive block
+    if [ "$YES" -eq 0 ]
+    then
+        while true
+        do
+            read -r -p "Download folder '${OUTDIR}' does not exist. Create it? [Yn] " yn
+            case $yn in
+                [Yy]*) break ;;
+                [Nn]*) exit 2 ;;
+            esac
+        done
+    fi
+
+    # Create download folder
+    echo "Creating download folder '${OUTDIR}' ..."
     mkdir -p "${OUTDIR}"
+
 fi
+
+echo "Folder: ${OUTDIR}"
 
 # Check if output file already exists
 if [ -f "${OUTDIR}/${FILENAME}" ]
 then
-    if [ "${YES}" -eq 1 ]
+
+    # Interactive block
+    if [ "${YES}" -eq 0 ]
     then
-        rm -f "${OUTDIR}/${FILENAME}"
-    else
-        echo "File \"${OUTDIR}/${FILENAME}\" already exists ..."
-        exit 2
+        while true
+        do
+            read -r -p "Output file '${OUTDIR}/${FILENAME}' already exists. Replace ot? [Yn] " yn
+            case $yn in
+                [Yy]*) break ;;
+                [Nn]*) exit 3 ;;
+            esac
+        done
     fi
+
+    # Remvoe existing output file
+    rm -f "${OUTDIR}/${FILENAME}"
+
 fi
+
+echo "Filename: ${FILENAME}"
 
 # Download image and save to collection
 wget --no-clobber --quiet --output-document="${OUTDIR}/${FILENAME}" "${FILEURL}"
@@ -142,9 +171,9 @@ ecode=$?
 # Check exit code
 if [ "$ecode" -eq 0 ]
 then
-    KBYTES=$(echo "scale=2; $(stat -c %s "${OUTDIR}/${FILENAME}")/1024" | bc -l)
-    echo "Successfully created file \"${OUTDIR}/${FILENAME}\" (${KBYTES} kB written)"
+    KBYTES=$(echo "scale=1; $(stat -c %s "${OUTDIR}/${FILENAME}")/1024" | bc -l)
+    echo "Status: ok (${KBYTES} kB written)"
 else
-    echo "Could not create file (error: $ecode)" >&2
-    exit 3
+    echo "Status: Failed (wget error: $ecode)" >&2
+    exit 4
 fi
