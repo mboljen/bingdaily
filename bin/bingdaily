@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Created:         Mi 2021-02-17 21:23:22 CET
-# Last Modified:   Fri 2021-03-05 09:57:14 CET
+# Last Modified:   So 2021-04-04 22:51:19 CEST
 #
 # bingdaily:
 #   Downloads the daily Bing wallpaper
@@ -140,24 +140,26 @@ else
     if [ ! -d "${OUTDIR}" ]
     then
 
-        # Check quiet mode
-        if [ "${QUIET}" -eq 1 ]
+        # Check if interactive mode is disabled
+        if [ "$YES" -ne 1 ]
         then
-            echoerr "Download folder "${OUTDIR}" does not exist."
-            exit 2
-        fi
 
-        # Interactive block
-        if [ "$YES" -eq 0 ]
-        then
+            # User message 
+            echoerr "Download folder '${OUTDIR}' does not exist."
+
+ 	    # Exit script if quiet mode enabled
+            [ "${QUIET}" -eq 1 ] && exit 2
+
+            # User interaction
             while true
             do
-                read -r -p "Download folder '${OUTDIR}' does not exist. Create it? [Yn] " yn
+                read -r -p "Create it? [Yn] " yn
                 case $yn in
                     [Yy]*) break ;;
                     [Nn]*) exit 2 ;;
                 esac
             done
+
         fi
 
         # Create download folder
@@ -171,25 +173,27 @@ else
 
     # Append trailing slash
     OUTDIR="${OUTDIR}/"
+
 fi
 
 # Check if output file already exists
 if [ -f "${OUTDIR}${FILENAME}" ]
 then
 
-    # Check quiet mode
-    if [ "${QUIET}" -eq 1 ]
+    # If permission to overwrite is not given
+    if [ "${YES}" -ne 1 ]
     then
-        echoerr "Output file "${OUTDIR}/${FILENAME}" already exists"
-        exit 3
-    fi
 
-    # Interactive block
-    if [ "${YES}" -eq 0 ]
-    then
+        # User message
+        echoerr "Output file '${OUTDIR}${FILENAME}' already exists."
+
+        # Exit script if quiet mode enabled
+        [ "${QUIET}" -eq 1 ] && exit 3
+
+        # User interaction
         while true
         do
-            read -r -p "Output file '${OUTDIR}${FILENAME}' already exists. Replace it? [Yn] " yn
+            read -r -p "Replace it? [Yn] " yn
             case $yn in
                 [Yy]*) break ;;
                 [Nn]*) exit 3 ;;
@@ -202,6 +206,7 @@ then
 
 fi
 
+# Logging
 echo "Filename: ${FILENAME}"
 
 # Download image and save to collection
