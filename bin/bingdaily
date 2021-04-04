@@ -117,50 +117,64 @@ STARTDATE=$(echo "${RESP}" | grep -oP '\"startdate\":\"[^\"]*' | cut -d \" -f 4)
 # Fetch title
 TITLE=$(echo "${RESP}" | grep -oP 'title\":\"[^\"]*' | cut -d \" -f 3)
 
-# Getting Image filename.
+# Getting image filename
 FILENAME=${FILEURL##*/}
 FILENAME=${FILENAME#th?id=OHR.}
 FILENAME=${FILENAME%&rf=*}
 FILENAME=${STARTDATE}-${FILENAME}
 
-# Logging.
+# Logging
 echo "Title: ${TITLE}"
 echo "URL: ${FILEURL}"
 
-# Create output directory
-if [ ! -d "${OUTDIR}" ]
+# Check output directory
+if [ "${OUTDIR}" == "$(pwd)" ]
 then
 
-    # Check quiet mode
-    if [ "${QUIET}" -eq 1 ]
+    # Reset output directory
+    OUTDIR=
+
+else
+
+    # Create output directory
+    if [ ! -d "${OUTDIR}" ]
     then
-        echoerr "Download folder "${OUTDIR}" does not exist."
-        exit 2
+
+        # Check quiet mode
+        if [ "${QUIET}" -eq 1 ]
+        then
+            echoerr "Download folder "${OUTDIR}" does not exist."
+            exit 2
+        fi
+
+        # Interactive block
+        if [ "$YES" -eq 0 ]
+        then
+            while true
+            do
+                read -r -p "Download folder '${OUTDIR}' does not exist. Create it? [Yn] " yn
+                case $yn in
+                    [Yy]*) break ;;
+                    [Nn]*) exit 2 ;;
+                esac
+            done
+        fi
+
+        # Create download folder
+        echo "Creating download folder '${OUTDIR}' ..."
+        mkdir -p "${OUTDIR}"
+
     fi
 
-    # Interactive block
-    if [ "$YES" -eq 0 ]
-    then
-        while true
-        do
-            read -r -p "Download folder '${OUTDIR}' does not exist. Create it? [Yn] " yn
-            case $yn in
-                [Yy]*) break ;;
-                [Nn]*) exit 2 ;;
-            esac
-        done
-    fi
+    # Logging
+    echo "Folder: ${OUTDIR}"
 
-    # Create download folder
-    echo "Creating download folder '${OUTDIR}' ..."
-    mkdir -p "${OUTDIR}"
-
+    # Append trailing slash
+    OUTDIR="${OUTDIR}/"
 fi
 
-echo "Folder: ${OUTDIR}"
-
 # Check if output file already exists
-if [ -f "${OUTDIR}/${FILENAME}" ]
+if [ -f "${OUTDIR}${FILENAME}" ]
 then
 
     # Check quiet mode
@@ -175,7 +189,7 @@ then
     then
         while true
         do
-            read -r -p "Output file '${OUTDIR}/${FILENAME}' already exists. Replace it? [Yn] " yn
+            read -r -p "Output file '${OUTDIR}${FILENAME}' already exists. Replace it? [Yn] " yn
             case $yn in
                 [Yy]*) break ;;
                 [Nn]*) exit 3 ;;
@@ -183,21 +197,21 @@ then
         done
     fi
 
-    # Remvoe existing output file
-    rm -f "${OUTDIR}/${FILENAME}"
+    # Remove existing output file
+    rm -f "${OUTDIR}${FILENAME}"
 
 fi
 
 echo "Filename: ${FILENAME}"
 
 # Download image and save to collection
-wget --no-clobber --quiet --output-document="${OUTDIR}/${FILENAME}" "${FILEURL}"
+wget --no-clobber --quiet --output-document="${OUTDIR}${FILENAME}" "${FILEURL}"
 ecode=$?
 
 # Check exit code
 if [ "$ecode" -eq 0 ]
 then
-    KBYTES=$(echo "scale=1; $(stat -c %s "${OUTDIR}/${FILENAME}")/1024" | bc -l)
+    KBYTES=$(echo "scale=1; $(stat -c %s "${OUTDIR}${FILENAME}")/1024" | bc -l)
     echo "Status: ok (${KBYTES} kB written)"
 else
     echoerr echo "Status: Failed (wget error: $ecode)"
