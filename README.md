@@ -2,6 +2,8 @@
 
 This bash script downloads the daily Bing wallpaper and saves it to a given directory.
 
+Refer to the bash script [`backslide`](https://github.com/mboljen/backslide) to change the current desktop wallpaper after having downloaded the daily Bing wallpaper.
+
 ## Installation
 
 Use the following command to install this software:
@@ -18,12 +20,12 @@ The default `PREFIX` is set to `/usr/local`.  In order to succesfully complete t
 The following command will download the current wallpaper offered by [Bing](https://www.bing.com/):
 
 ```bash
-$ bingdaily [-C directory] [-m market] [-d day] [-r resolution] [-y] [-h]
+$ bingdaily [-p directory] [-m market] [-d day] [-r resolution] [-y] [-h]
 ```
 
 ### Options
 
-+ `-C directory`
++ `-p directory`
 
   Changes the download folder.  The default download location is set to `$XDG_PICTURES_DIR/Bing`.
 
@@ -67,6 +69,22 @@ $ bingdaily [-C directory] [-m market] [-d day] [-r resolution] [-y] [-h]
 + `-h`
 
   Shows this help message.
+
+### Autostart
+
+In order to invoke the script after user login, create the file `~/.config/autostart/bingdaily.desktop` with the following contents.
+
+```
+[Desktop Entry]
+Type=Application
+Name=Daily Bing Wallpaper
+Exec=sh -c "bingdaily -y"
+Icon=wallpaper
+Comment=Download Bing daily wallpaper
+X-GNOME-Autostart-enabled=true
+```
+
+Make sure that `bingdaily` can be found using the `PATH` variable.
 
 ## Contributing
 
