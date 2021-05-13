@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Created:         Mi 2021-02-17 21:23:22 CET
-# Last Modified:   So 2021-04-04 22:51:19 CEST
+# Last Modified:   Do 2021-05-13 18:14:05 CEST
 #
 # bingdaily:
 #   Downloads the daily Bing wallpaper
@@ -19,6 +19,7 @@ OPTIONS:
    -m MARKET      Select market (default: de-DE)
    -d DAY         Select day (default: 0=current, 1=yesterday, ...)
    -r RESOLUTION  Select image resolution (default: UHD)
+   -l             Add wallpaper title to picture
    -y             Create output directories and files without asking
    -q             Quiet mode
    -h             Show this message
@@ -40,6 +41,9 @@ MARKET="de-DE"
 # Collection Path
 OUTDIR="$(xdg-user-dir PICTURES)/Bing"
 
+# Add label
+LABEL=0
+
 # For day (0=current; 1=yesterday... so on)
 DAY=0
 
@@ -47,7 +51,7 @@ DAY=0
 QUIET=0
 
 # Process options
-while getopts p:m:d:r:yqh OPTION
+while getopts p:m:d:lr:yqh OPTION
 do
     case "${OPTION}"
     in
@@ -58,6 +62,8 @@ do
         d)  DAY=${OPTARG}
             ;;
         r)  RESOLUTION=${OPTARG}
+            ;;
+        l)  LABEL=1
             ;;
         y)  YES=1
             ;;
@@ -147,7 +153,7 @@ else
             # User message 
             echoerr "Download folder '${OUTDIR}' does not exist."
 
- 	    # Exit script if quiet mode enabled
+            # Exit script if quiet mode enabled
             [ "${QUIET}" -eq 1 ] && exit 2
 
             # User interaction
@@ -209,16 +215,50 @@ fi
 # Logging
 echo "Filename: ${FILENAME}"
 
+# Set temporary filename
+TEMPFILE=$(mktemp --suffix=.jpg -u -t bingdaily-XXXXXX)
+
 # Download image and save to collection
-wget --no-clobber --quiet --output-document="${OUTDIR}${FILENAME}" "${FILEURL}"
+wget --no-clobber --quiet --output-document="${TEMPFILE}" "${FILEURL}"
 ecode=$?
 
 # Check exit code
-if [ "$ecode" -eq 0 ]
+if [ "$ecode" -ne 0 ]
 then
-    KBYTES=$(echo "scale=1; $(stat -c %s "${OUTDIR}${FILENAME}")/1024" | bc -l)
-    echo "Status: ok (${KBYTES} kB written)"
-else
     echoerr echo "Status: Failed (wget error: $ecode)"
     exit 4
 fi
+
+# Fetch wallpaper dimensions
+WIDTH=$(identify -format %w "${TEMPFILE}")
+HEIGHT=$(identify -format %h "${TEMPFILE}")
+
+# Logging
+echo "Dimensions: ${WIDTH}x${HEIGHT}"
+
+# Check if label is required
+if [ "${LABEL}" -eq 1 ]
+then
+
+    # Determine height of label
+    LABELHEIGHT=$(echo "scale=0; ${HEIGHT}*2./100." | bc)
+    LABELHEIGHT=$(( LABELHEIGHT > 80 ? 80 : LABELHEIGHT ))
+
+    # Invoke ImageMagick
+    convert -background '#0008' -fill white -gravity center \
+        -size ${WIDTH}x${LABELHEIGHT} caption:"${TITLE}" \
+        "${TEMPFILE}" +swap -gravity south -composite \
+        "${OUTDIR}${FILENAME}"
+
+    rm "${TEMPFILE}"
+
+else
+
+    # Logging
+    mv "${TEMPFILE}" "${OUTDIR}${FILENAME}"
+
+fi
+
+# Logging
+KBYTES=$(echo "scale=1; $(stat -c %s "${OUTDIR}${FILENAME}")/1024" | bc -l)
+echo "Status: ok (${KBYTES} kB written)"

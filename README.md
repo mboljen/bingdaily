@@ -20,7 +20,7 @@ The default `PREFIX` is set to `/usr/local`.  In order to succesfully complete t
 The following command will download the current wallpaper offered by [Bing](https://www.bing.com/):
 
 ```bash
-$ bingdaily [-p directory] [-m market] [-d day] [-r resolution] [-y] [-h]
+$ bingdaily [-p directory] [-m market] [-d day] [-r resolution] [-l] [-y] [-h]
 ```
 
 ### Options
@@ -61,6 +61,10 @@ $ bingdaily [-p directory] [-m market] [-d day] [-r resolution] [-y] [-h]
   - `1280x720`
   - `1024x768`
   - `800x600`
+
++ `-l`
+
+  Add wallpaper title at the bottom of the wallpaper.  [ImageMagick](https://www.imagemagick.org/) is required.
 
 + `-y`
 
