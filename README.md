@@ -52,7 +52,7 @@ $ bingdaily [-p directory] [-m market] [-d day] [-r resolution] [-l] [-y] [-h]
 
 + `-r resolution`
 
-  Selects the desired image resolution.
+  Selects the desired image resolution in pixels.
 
   - `UHD` (default)
   - `1920x1280`
@@ -62,9 +62,13 @@ $ bingdaily [-p directory] [-m market] [-d day] [-r resolution] [-l] [-y] [-h]
   - `1024x768`
   - `800x600`
 
-+ `-l`
++ `-s size`
 
-  Add wallpaper title at the bottom of the wallpaper.  [ImageMagick](https://www.imagemagick.org/) is required.
+  Set font size of wallpaper title added as annotation to the bottom of the wallpaper.  The default is `0` to not include any description.  [ImageMagick](https://www.imagemagick.org/) is required.  The value `size` can be set to one of the following:
+
+  + Positive values larger than `1` are interpreted as absolute values in pixels.
+  + Positive values smaller than `1` are applied as scaling factors to the detected image height.
+  + Positive values with trailing percentage sign are applied to the image height.
 
 + `-y`
 

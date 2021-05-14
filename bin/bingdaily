@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Created:         Mi 2021-02-17 21:23:22 CET
-# Last Modified:   Do 2021-05-13 18:14:05 CEST
+# Last Modified:   Fr 2021-05-14 12:19:41 CEST
 #
 # bingdaily:
 #   Downloads the daily Bing wallpaper
@@ -19,7 +19,7 @@ OPTIONS:
    -m MARKET      Select market (default: de-DE)
    -d DAY         Select day (default: 0=current, 1=yesterday, ...)
    -r RESOLUTION  Select image resolution (default: UHD)
-   -l             Add wallpaper title to picture
+   -s FONTSIZE    Set font size of wallpaper title (default: 0)
    -y             Create output directories and files without asking
    -q             Quiet mode
    -h             Show this message
@@ -41,8 +41,8 @@ MARKET="de-DE"
 # Collection Path
 OUTDIR="$(xdg-user-dir PICTURES)/Bing"
 
-# Add label
-LABEL=0
+# Font size of wallpaper title
+FONTSIZE=0
 
 # For day (0=current; 1=yesterday... so on)
 DAY=0
@@ -51,7 +51,7 @@ DAY=0
 QUIET=0
 
 # Process options
-while getopts p:m:d:lr:yqh OPTION
+while getopts p:m:d:s:r:yqh OPTION
 do
     case "${OPTION}"
     in
@@ -63,7 +63,7 @@ do
             ;;
         r)  RESOLUTION=${OPTARG}
             ;;
-        l)  LABEL=1
+        s)  FONTSIZE=${OPTARG}
             ;;
         y)  YES=1
             ;;
@@ -80,6 +80,13 @@ done
 
 # Skip options
 shift $((OPTIND-1))
+
+# Check if size not a plain number
+if ! [[ ${FONTSIZE} =~ ^[0-9]+\.?[0-9]*\%?$ ]]
+then
+    echoerr "Invalid fontsize: ${FONTSIZE}"
+    exit 1
+fi
 
 # Switch to quiet mode
 [ "${QUIET}" -eq 1 ] && exec 1>/dev/null
@@ -236,26 +243,42 @@ HEIGHT=$(identify -format %h "${TEMPFILE}")
 # Logging
 echo "Dimensions: ${WIDTH}x${HEIGHT}"
 
-# Check if label is required
-if [ "${LABEL}" -eq 1 ]
+# Determine absolute fontsize
+if [[ $FONTSIZE =~ \%$ ]]
 then
 
-    # Determine height of label
-    LABELHEIGHT=$(echo "scale=0; ${HEIGHT}*2./100." | bc)
-    LABELHEIGHT=$(( LABELHEIGHT > 80 ? 80 : LABELHEIGHT ))
+    # Use value as percentage scaling factor
+    FONTSIZE=${FONTSIZE%?}
+    FONTSIZE=$(echo "${HEIGHT}*${FONTSIZE}/100" | bc)
 
-    # Invoke ImageMagick
-    convert -background '#0008' -fill white -gravity center \
-        -size ${WIDTH}x${LABELHEIGHT} caption:"${TITLE}" \
-        "${TEMPFILE}" +swap -gravity south -composite \
-        "${OUTDIR}${FILENAME}"
+elif (( $(echo "${FONTSIZE} < 1.0" | bc -l ) ))
+then
 
-    rm "${TEMPFILE}"
+    # Use value as scaling factor
+    FONTSIZE=$(echo "${HEIGHT}*${FONTSIZE}/1" | bc)
+
+fi
+
+# Check if label is required
+if [ "${FONTSIZE}" -eq 0 ]
+then
+
+    # Logging
+    mv "${TEMPFILE}" "${OUTDIR}${FILENAME}"
 
 else
 
     # Logging
-    mv "${TEMPFILE}" "${OUTDIR}${FILENAME}"
+    echo "Label fontsize: ${FONTSIZE}"
+
+    # Invoke ImageMagick
+    convert -background '#0008' -fill white -gravity center \
+        -size ${WIDTH}x${FONTSIZE} caption:"${TITLE}" \
+        "${TEMPFILE}" +swap -gravity south -composite \
+        "${OUTDIR}${FILENAME}"
+
+    # Remove temporary file
+    rm "${TEMPFILE}"
 
 fi
 
