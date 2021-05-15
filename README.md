@@ -64,11 +64,11 @@ $ bingdaily [-p directory] [-m market] [-d day] [-r resolution] [-s size] [-y] [
 
 + `-s size`
 
-  Set font size of wallpaper title added as annotation to the bottom of the wallpaper. The default is `0` to not include any description.  [ImageMagick](https://www.imagemagick.org/) is required.  The value `size` can be set to one of the following:
+  Sets the font size of the wallpaper title added as annotation to the bottom of the wallpaper.  The default is `0` to not include any description.  This feature requires  [ImageMagick](https://www.imagemagick.org/) version 6.3.2 or later.  The value `size` can be set to one of the following:
 
-  + Positive values larger than `1` are interpreted as absolute values in pixels.
-  + Positive values smaller than `1` are applied as scaling factors to the detected image height.
-  + Positive values with trailing percentage sign are applied to the image height.
+  + Positive values larger than `1` are interpreted as absolute integers in pixels.
+  + Positive values smaller than `1` are applied as scaling factor to the image height of the Bing wallpaper.
+  + Positive values with a trailing percentage sign are applied to the image height of the Bing wallpaper.
 
 + `-y`
 

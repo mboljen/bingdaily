@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Created:         Mi 2021-02-17 21:23:22 CET
-# Last Modified:   Sa 2021-05-15 13:46:48 CEST
+# Last Modified:   Sa 2021-05-15 13:50:52 CEST
 #
 # bingdaily:
 #   Downloads the daily Bing wallpaper
@@ -20,7 +20,7 @@ OPTIONS:
    -d DAY         Select day (default: 0=current, 1=yesterday, ...)
    -r RESOLUTION  Select image resolution (default: UHD)
    -s FONTSIZE    Set font size of wallpaper title (default: 0)
-   -y             Overwrite existing optput files without asking
+   -y             Overwrite existing output files without asking
    -q             Quiet mode
    -h             Show this message
 EOF
