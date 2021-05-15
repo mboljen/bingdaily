@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Created:         Mi 2021-02-17 21:23:22 CET
-# Last Modified:   Fr 2021-05-14 12:19:41 CEST
+# Last Modified:   Sa 2021-05-15 13:46:48 CEST
 #
 # bingdaily:
 #   Downloads the daily Bing wallpaper
@@ -15,12 +15,12 @@ Usage: bingdaily [options]
 This script will download the daily Bing wallpaper.
 
 OPTIONS:
-   -p PATH        Select download location
+   -p PATH        Select download location (default: current working directory)
    -m MARKET      Select market (default: de-DE)
    -d DAY         Select day (default: 0=current, 1=yesterday, ...)
    -r RESOLUTION  Select image resolution (default: UHD)
    -s FONTSIZE    Set font size of wallpaper title (default: 0)
-   -y             Create output directories and files without asking
+   -y             Overwrite existing optput files without asking
    -q             Quiet mode
    -h             Show this message
 EOF
@@ -29,6 +29,12 @@ EOF
 # Echo error messages on STDERR
 echoerr () { cat <<< "$@" 1>&2; }
 
+#
+declare -a MARKETS=("en-US" "zh-CN" "ja-JP" "en-AU" "en-UK" "de-DE" "en-NZ" "en-CA")
+
+#
+declare -a RESOLUTIONS=("UHD" "1920x1200" "1920x1080" "1366x768" "1280x720" "1024x768" "800x600")
+    
 # Overwrite exxisting files
 YES=0
 
@@ -39,7 +45,7 @@ RESOLUTION="UHD"
 MARKET="de-DE"
 
 # Collection Path
-OUTDIR="$(xdg-user-dir PICTURES)/Bing"
+OUTDIR=
 
 # Font size of wallpaper title
 FONTSIZE=0
@@ -85,6 +91,27 @@ shift $((OPTIND-1))
 if ! [[ ${FONTSIZE} =~ ^[0-9]+\.?[0-9]*\%?$ ]]
 then
     echoerr "Invalid fontsize: ${FONTSIZE}"
+    exit 1
+fi
+
+# Verify selected download location
+if [[ -n "${OUTDIR}" && ! -d "${OUTDIR}" ]]
+then
+    echoerr "Download location ${OUTDIR} does not exist"
+    exit 1
+fi
+
+# Verify selected market
+if [[ ! " ${MARKETS[@]} " =~ " ${MARKET} " ]]
+then
+    echoerr "Invalid market: ${MARKET}, valid options: ${MARKETS[@]}"
+    exit 1
+fi
+
+# Verify selected resolution
+if [[ ! " ${RESOLUTIONS[@]} " =~ " ${RESOLUTION} " ]]
+then
+    echoerr "Invalid resolution: ${RESOLUTION}, valid options: ${RESOLUTIONS[@]}"
     exit 1
 fi
 
@@ -140,54 +167,8 @@ FILENAME=${STARTDATE}-${FILENAME}
 echo "Title: ${TITLE}"
 echo "URL: ${FILEURL}"
 
-# Check output directory
-if [ "${OUTDIR}" == "$(pwd)" ]
-then
-
-    # Reset output directory
-    OUTDIR=
-
-else
-
-    # Create output directory
-    if [ ! -d "${OUTDIR}" ]
-    then
-
-        # Check if interactive mode is disabled
-        if [ "$YES" -ne 1 ]
-        then
-
-            # User message 
-            echoerr "Download folder '${OUTDIR}' does not exist."
-
-            # Exit script if quiet mode enabled
-            [ "${QUIET}" -eq 1 ] && exit 2
-
-            # User interaction
-            while true
-            do
-                read -r -p "Create it? [Yn] " yn
-                case $yn in
-                    [Yy]*) break ;;
-                    [Nn]*) exit 2 ;;
-                esac
-            done
-
-        fi
-
-        # Create download folder
-        echo "Creating download folder '${OUTDIR}' ..."
-        mkdir -p "${OUTDIR}"
-
-    fi
-
-    # Logging
-    echo "Folder: ${OUTDIR}"
-
-    # Append trailing slash
-    OUTDIR="${OUTDIR}/"
-
-fi
+# Add trailing slash
+[[ -n "${OUTDIR}" ]] && OUTDIR="${OUTDIR}/"
 
 # Check if output file already exists
 if [ -f "${OUTDIR}${FILENAME}" ]
@@ -244,7 +225,7 @@ HEIGHT=$(identify -format %h "${TEMPFILE}")
 echo "Dimensions: ${WIDTH}x${HEIGHT}"
 
 # Determine absolute fontsize
-if [[ $FONTSIZE =~ \%$ ]]
+if [[ ${FONTSIZE} =~ \%$ ]]
 then
 
     # Use value as percentage scaling factor
@@ -254,10 +235,16 @@ then
 elif (( $(echo "${FONTSIZE} < 1.0" | bc -l ) ))
 then
 
-    # Use value as scaling factor
+    # Convert relative font size to integer
     FONTSIZE=$(echo "${HEIGHT}*${FONTSIZE}/1" | bc)
 
+else
+
+    # Convert absolute font size to integer
+    FONTSIZE=$(echo "${FONTSIZE}/1" | bc)
+
 fi
+
 
 # Check if label is required
 if [ "${FONTSIZE}" -eq 0 ]
@@ -268,12 +255,15 @@ then
 
 else
 
+    # Calculate label height
+    LABELHEIGHT=$(echo "${FONTSIZE}*1.5/1" | bc)
+
     # Logging
     echo "Label fontsize: ${FONTSIZE}"
 
     # Invoke ImageMagick
-    convert -background '#0008' -fill white -gravity center \
-        -size ${WIDTH}x${FONTSIZE} caption:"${TITLE}" \
+    convert -size ${WIDTH}x${LABELHEIGHT} -background '#0008' \
+       	-fill white -pointsize ${FONTSIZE} -gravity center caption:"${TITLE}" \
         "${TEMPFILE}" +swap -gravity south -composite \
         "${OUTDIR}${FILENAME}"
 

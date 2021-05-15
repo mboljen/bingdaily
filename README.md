@@ -20,14 +20,14 @@ The default `PREFIX` is set to `/usr/local`.  In order to succesfully complete t
 The following command will download the current wallpaper offered by [Bing](https://www.bing.com/):
 
 ```bash
-$ bingdaily [-p directory] [-m market] [-d day] [-r resolution] [-l] [-y] [-h]
+$ bingdaily [-p directory] [-m market] [-d day] [-r resolution] [-s size] [-y] [-h]
 ```
 
 ### Options
 
 + `-p directory`
 
-  Changes the download folder.  The default download location is set to `$XDG_PICTURES_DIR/Bing`.
+  Changes the download folder.  The default download location is set to the current working directory.
 
 + `-m market`
 
@@ -64,7 +64,7 @@ $ bingdaily [-p directory] [-m market] [-d day] [-r resolution] [-l] [-y] [-h]
 
 + `-s size`
 
-  Set font size of wallpaper title added as annotation to the bottom of the wallpaper.  The default is `0` to not include any description.  [ImageMagick](https://www.imagemagick.org/) is required.  The value `size` can be set to one of the following:
+  Set font size of wallpaper title added as annotation to the bottom of the wallpaper. The default is `0` to not include any description.  [ImageMagick](https://www.imagemagick.org/) is required.  The value `size` can be set to one of the following:
 
   + Positive values larger than `1` are interpreted as absolute values in pixels.
   + Positive values smaller than `1` are applied as scaling factors to the detected image height.
@@ -77,6 +77,14 @@ $ bingdaily [-p directory] [-m market] [-d day] [-r resolution] [-l] [-y] [-h]
 + `-h`
 
   Shows this help message.
+
+### Exit codes
+
++ `0` All operations successful
++ `1` Invalid configuration
++ `2` Failed to fetch meta information of Bing wallpaper
++ `3` Failed to replace existing Bing wallpaper
++ `4` Failed to download Bing wallpaper
 
 ### Autostart
 
