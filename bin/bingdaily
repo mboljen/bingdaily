@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Created:         Mi 2021-02-17 21:23:22 CET
-# Last Modified:   Sa 2021-05-15 13:50:52 CEST
+# Last Modified:   Sa 2021-05-15 17:08:01 CEST
 #
 # bingdaily:
 #   Downloads the daily Bing wallpaper
@@ -29,12 +29,12 @@ EOF
 # Echo error messages on STDERR
 echoerr () { cat <<< "$@" 1>&2; }
 
-#
+# Available markets
 declare -a MARKETS=("en-US" "zh-CN" "ja-JP" "en-AU" "en-UK" "de-DE" "en-NZ" "en-CA")
 
-#
+# Available resolutions
 declare -a RESOLUTIONS=("UHD" "1920x1200" "1920x1080" "1366x768" "1280x720" "1024x768" "800x600")
-    
+
 # Overwrite exxisting files
 YES=0
 
@@ -256,14 +256,16 @@ then
 else
 
     # Calculate label height
-    LABELHEIGHT=$(echo "${FONTSIZE}*1.5/1" | bc)
+    LABELOFFSET=$(echo "${FONTSIZE}/2" | bc)
+    FONTSIZE=$(echo "${LABELOFFSET}*2" | bc)
+    LABELHEIGHT=$(echo "${FONTSIZE}*2" | bc)
 
     # Logging
     echo "Label fontsize: ${FONTSIZE}"
 
     # Invoke ImageMagick
     convert -size ${WIDTH}x${LABELHEIGHT} -background '#0008' \
-       	-fill white -pointsize ${FONTSIZE} -gravity center caption:"${TITLE}" \
+        -fill white -pointsize ${FONTSIZE} -gravity center caption:"${TITLE}" \
         "${TEMPFILE}" +swap -gravity south -composite \
         "${OUTDIR}${FILENAME}"
 
