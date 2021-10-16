@@ -14,23 +14,32 @@ SIG=$(PKG_DIR)/$(PKG_NAME).asc
 PREFIX?=/usr/local
 DOC_DIR=$(PREFIX)/share/doc/$(PKG_NAME)
 
+MAN_DIR=share/man/man1
+MAN=$(MAN_DIR)/$(NAME).1.gz
+
+build: $(MAN) $(PKG)
+
+all: $(MAN) $(PKG) $(SIG)
+
 pkg:
 	mkdir -p $(PKG_DIR)
 
 $(PKG): pkg
 	git archive --output=$(PKG) --prefix=$(PKG_NAME)/ HEAD
 
-build: $(PKG)
+man:
+	mkdir -p $(MAN_DIR)
+
+$(MAN): man
+	help2man bin/$(NAME) | gzip -9 > $(MAN)
+
+sign: $(SIG)
 
 $(SIG): $(PKG)
 	gpg --sign --detach-sign --armor $(PKG)
 
-sign: $(SIG)
-
 clean:
-	rm -f $(PKG) $(SIG)
-
-all: $(PKG) $(SIG)
+	rm -f $(MAN) $(PKG) $(SIG)
 
 test:
 
@@ -51,4 +60,4 @@ uninstall:
 	rm -rf $(DOC_DIR)
 
 
-.PHONY: build sign clean test tag release install uninstall all
+.PHONY: build sign man clean test tag release install uninstall all
