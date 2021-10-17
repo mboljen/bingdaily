@@ -14,8 +14,9 @@ SIG=$(PKG_DIR)/$(PKG_NAME).asc
 PREFIX?=/usr/local
 DOC_DIR=$(PREFIX)/share/doc/$(PKG_NAME)
 
-MAN_DIR=share/man/man1
-MAN=$(MAN_DIR)/$(NAME).1.gz
+MAN_SECTION ?= 1
+MAN_DIR = share/man/man$(MAN_SECTION)
+MAN = $(MAN_DIR)/$(NAME).$(MAN_SECTION).gz
 
 build: $(MAN) $(PKG)
 
@@ -30,8 +31,8 @@ $(PKG): pkg
 man:
 	mkdir -p $(MAN_DIR)
 
-$(MAN): man
-	help2man bin/$(NAME) | gzip -9 > $(MAN)
+$(MAN): README.md man
+	pandoc -s -M "title=$(NAME)($(MAN_SECTION))" -M "date=$(shell date "+%a %F %R %Z")" -t man $< | gzip -9 > $(MAN)
 
 sign: $(SIG)
 
