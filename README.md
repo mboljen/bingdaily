@@ -5,12 +5,12 @@ bingdaily - Download the daily Bing wallpaper and save it to a given directory.
 
 # SYNOPSIS
 
-**bingdaily** [-p directory] [-m market] [-d day] [-r resolution] [-s size] [-y] [-h]
+**bingdaily** [ **-p** _directory_ ] [ **-m** _market_ ] [ **-d** _day_ ] [ **-r** _resolution_ ] [ **-s** _size_ ] [ **-y** ] [ **-h** ]
 
 
 # DESCRIPTION
 
-**bingdaily** download the current wallpaper offered by [Bing](https://www.bing.com/):
+**bingdaily** downloads the current daily wallpaper offered by [Bing](https://www.bing.com/).
 
 
 # OPTIONS
@@ -18,7 +18,7 @@ bingdaily - Download the daily Bing wallpaper and save it to a given directory.
 **-p** _path_
 : change the download folder.  The default download folder is set to the current working directory.
 
-**-m** _market`_
+**-m** _market_
 : select the Bing market.
 
   - `en-US`
