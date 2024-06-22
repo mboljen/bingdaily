@@ -1,11 +1,11 @@
 # bingdaily
 
-Download the daily Bing wallpaper and save it to a given directory.
+Download the daily Bing wallpaper and save it to a given directory
 
 
 ## Description
 
-**bingdaily** downloads the current daily wallpaper offered by [Bing](https://www.bing.com/).
+This script downloads the current daily wallpaper offered by [Bing](https://www.bing.com/).
 
 
 ## Synopsis
