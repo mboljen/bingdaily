@@ -1,28 +1,26 @@
 #!/usr/bin/env bash
 #
 # Created:         Mi 2021-02-17 21:23:22 CET
-# Last Modified:   Sa 2021-05-15 17:08:01 CEST
+# Last Modified:   Mo 2024-06-24 01:23:11 CEST
 #
 # bingdaily:
-#   Downloads the daily Bing wallpaper
+#   Download the daily Bing wallpaper and save it to a given directory
 
 # Help text
 usage () {
 cat << EOF
+Download the daily Bing wallpaper and save it to a given directory
 
-Usage: bingdaily [options]
+Usage: bingdaily [OPTION]...
 
-This script will download the daily Bing wallpaper.
-
-OPTIONS:
-   -p PATH        Select download location (default: current working directory)
-   -m MARKET      Select market (default: de-DE)
-   -d DAY         Select day (default: 0=current, 1=yesterday, ...)
-   -r RESOLUTION  Select image resolution (default: UHD)
-   -s FONTSIZE    Set font size of wallpaper title (default: 0)
-   -y             Overwrite existing output files without asking
-   -q             Quiet mode
-   -h             Show this message
+Options:
+   -p PATH         Select download location (default: current working directory)
+   -m MARKET       Select market (default: de-DE)
+   -d DAY          Select day (default: 0=current, 1=yesterday, ...)
+   -r RESOLUTION   Select image resolution (default: UHD)
+   -s FONTSIZE     Set font size of wallpaper title (default: 0)
+   -y              Overwrite existing output files without asking
+   -h              Show this message
 EOF
 }
 
@@ -45,7 +43,7 @@ RESOLUTION="UHD"
 MARKET="de-DE"
 
 # Collection Path
-OUTDIR=
+OUTDIR=$(pwd)
 
 # Font size of wallpaper title
 FONTSIZE=0
@@ -53,27 +51,22 @@ FONTSIZE=0
 # For day (0=current; 1=yesterday... so on)
 DAY=0
 
-# Quiet mode
-QUIET=0
-
 # Process options
-while getopts p:m:d:s:r:yqh OPTION
+while getopts p:m:d:s:r:yh OPTION
 do
-    case "${OPTION}"
+    case "$OPTION"
     in
-        p)  OUTDIR=${OPTARG}
+        p)  OUTDIR="$OPTARG"
             ;;
-        m)  MARKET=${OPTARG}
+        m)  MARKET="$OPTARG"
             ;;
-        d)  DAY=${OPTARG}
+        d)  DAY="$OPTARG"
             ;;
-        r)  RESOLUTION=${OPTARG}
+        r)  RESOLUTION="$OPTARG"
             ;;
-        s)  FONTSIZE=${OPTARG}
+        s)  FONTSIZE="$OPTARG"
             ;;
         y)  YES=1
-            ;;
-        q)  QUIET=1
             ;;
         h)  usage
             exit 0
@@ -88,101 +81,92 @@ done
 shift $((OPTIND-1))
 
 # Check if size not a plain number
-if ! [[ ${FONTSIZE} =~ ^[0-9]+\.?[0-9]*\%?$ ]]
+if ! [[ $FONTSIZE =~ ^[0-9]+\.?[0-9]*\%?$ ]]
 then
-    echoerr "Invalid fontsize: ${FONTSIZE}"
+    echoerr "Invalid fontsize: $FONTSIZE"
     exit 1
 fi
 
 # Verify selected download location
-if [[ -n "${OUTDIR}" && ! -d "${OUTDIR}" ]]
+if [[ -n "$OUTDIR" && ! -d "$OUTDIR" ]]
 then
-    echoerr "Download location ${OUTDIR} does not exist"
+    echoerr "Download location $OUTDIR does not exist"
     exit 1
 fi
 
 # Verify selected market
-if [[ ! " ${MARKETS[@]} " =~ " ${MARKET} " ]]
+if [[ ! " ${MARKETS[@]} " =~ " $MARKET " ]]
 then
-    echoerr "Invalid market: ${MARKET}, valid options: ${MARKETS[@]}"
+    echoerr "Invalid market: $MARKET, valid options: ${MARKETS[@]}"
     exit 1
 fi
 
 # Verify selected resolution
-if [[ ! " ${RESOLUTIONS[@]} " =~ " ${RESOLUTION} " ]]
+if [[ ! " ${RESOLUTIONS[@]} " =~ " $RESOLUTION " ]]
 then
-    echoerr "Invalid resolution: ${RESOLUTION}, valid options: ${RESOLUTIONS[@]}"
+    echoerr "Invalid resolution: $RESOLUTION, valid options: ${RESOLUTIONS[@]}"
     exit 1
 fi
-
-# Switch to quiet mode
-[ "${QUIET}" -eq 1 ] && exec 1>/dev/null
 
 # Base URL
 BING="https://www.bing.com/"
 
 # Bing API
-API="HPImageArchive.aspx?format=js&idx=${DAY}&mkt=${MARKET}&n=1"
+API="HPImageArchive.aspx?format=js&idx=$DAY&mkt=$MARKET&n=1"
 
 # Remove optional trailing slashes
 BING=${BING%/}
 OUTDIR=${OUTDIR%/}
 
 # Fetch Bing metainfo
-RESP=$(wget --quiet --output-document=- "${BING}/${API}")
+RESP=$(wget --quiet --output-document=- "$BING/$API")
 ecode=$?
 if [ "$ecode" -gt 0 ]
 then
-    echoerr "No connection to ${BING}"
+    echoerr "No connection to $BING"
     exit 2
 fi
 
 # Fetch image URL
-FILEURL=$(echo "${RESP}" | grep -oP 'urlbase\":\"[^\"]*' | cut -d \" -f 3)_${RESOLUTION}.jpg
-FILEURL=${BING}/${FILEURL#/}
+FILEURL=$(echo "$RESP" | grep -oP 'urlbase\":\"[^\"]*' | cut -d \" -f 3)_$RESOLUTION.jpg
+FILEURL=$BING/${FILEURL#/}
 
 # Checking if URL exists
-if ! wget --quiet --spider --max-redirect 0 "${FILEURL}"
+if ! wget --quiet --spider --max-redirect 0 "$FILEURL"
 then
 
     # Default image URL in case the required size is not available
     echo "Switching to default resolution ..."
-    FILEURL=${BING}/$(echo "${RESP}" | grep -oP 'url\":\"[^\"]*' | cut -d \" -f 3)
+    FILEURL=$BING/$(echo "$RESP" | grep -oP 'url\":\"[^\"]*' | cut -d \" -f 3)
 
 fi
 
 # Fetch startdate
-STARTDATE=$(echo "${RESP}" | grep -oP '\"startdate\":\"[^\"]*' | cut -d \" -f 4)
+STARTDATE=$(echo "$RESP" | grep -oP '\"startdate\":\"[^\"]*' | cut -d \" -f 4)
 
 # Fetch title
-TITLE=$(echo "${RESP}" | grep -oP 'title\":\"[^\"]*' | cut -d \" -f 3)
+TITLE=$(echo "$RESP" | grep -oP 'title\":\"[^\"]*' | cut -d \" -f 3)
 
 # Getting image filename
 FILENAME=${FILEURL##*/}
 FILENAME=${FILENAME#th?id=OHR.}
 FILENAME=${FILENAME%&rf=*}
-FILENAME=${STARTDATE}-${FILENAME}
+FILENAME="$STARTDATE-$FILENAME"
 
 # Logging
-echo "Title: ${TITLE}"
-echo "URL: ${FILEURL}"
-
-# Add trailing slash
-[[ -n "${OUTDIR}" ]] && OUTDIR="${OUTDIR}/"
+echo "Title: $TITLE"
+echo "URL: $FILEURL"
 
 # Check if output file already exists
-if [ -f "${OUTDIR}${FILENAME}" ]
+if [ -f "$OUTDIR/$FILENAME" ]
 then
 
     # If permission to overwrite is not given
-    if [ "${YES}" -ne 1 ]
+    if [ "$YES" -ne 1 ]
     then
 
         # User message
-        echoerr "Output file '${OUTDIR}${FILENAME}' already exists."
-
-        # Exit script if quiet mode enabled
-        [ "${QUIET}" -eq 1 ] && exit 3
+        echoerr "Output file '$OUTDIR/$FILENAME' already exists."
 
         # User interaction
         while true
@@ -196,18 +180,18 @@ then
     fi
 
     # Remove existing output file
-    rm -f "${OUTDIR}${FILENAME}"
+    rm -f "$OUTDIR/$FILENAME"
 
 fi
 
 # Logging
-echo "Filename: ${FILENAME}"
+echo "Filename: $FILENAME"
 
 # Set temporary filename
 TEMPFILE=$(mktemp --suffix=.jpg -u -t bingdaily-XXXXXX)
 
 # Download image and save to collection
-wget --no-clobber --quiet --output-document="${TEMPFILE}" "${FILEURL}"
+wget --no-clobber --quiet --output-document="$TEMPFILE" "$FILEURL"
 ecode=$?
 
 # Check exit code
@@ -218,62 +202,63 @@ then
 fi
 
 # Fetch wallpaper dimensions
-WIDTH=$(identify -format %w "${TEMPFILE}")
-HEIGHT=$(identify -format %h "${TEMPFILE}")
+WIDTH=$(identify -format %w "$TEMPFILE")
+HEIGHT=$(identify -format %h "$TEMPFILE")
 
 # Logging
-echo "Dimensions: ${WIDTH}x${HEIGHT}"
+echo "Dimensions: $WIDTH x $HEIGHT"
 
 # Determine absolute fontsize
-if [[ ${FONTSIZE} =~ \%$ ]]
+if [[ $FONTSIZE =~ \%$ ]]
 then
 
     # Use value as percentage scaling factor
     FONTSIZE=${FONTSIZE%?}
-    FONTSIZE=$(echo "${HEIGHT}*${FONTSIZE}/100" | bc)
+    FONTSIZE=$(echo "$HEIGHT*$FONTSIZE/100" | bc)
 
-elif (( $(echo "${FONTSIZE} < 1.0" | bc -l ) ))
+elif (( $(echo "$FONTSIZE < 1.0" | bc -l ) ))
 then
 
     # Convert relative font size to integer
-    FONTSIZE=$(echo "${HEIGHT}*${FONTSIZE}/1" | bc)
+    FONTSIZE=$(echo "$HEIGHT*$FONTSIZE/1" | bc)
 
 else
 
     # Convert absolute font size to integer
-    FONTSIZE=$(echo "${FONTSIZE}/1" | bc)
+    FONTSIZE=$(echo "$FONTSIZE/1" | bc)
 
 fi
 
 
 # Check if label is required
-if [ "${FONTSIZE}" -eq 0 ]
+if [ "$FONTSIZE" -eq 0 ]
 then
 
     # Logging
-    mv "${TEMPFILE}" "${OUTDIR}${FILENAME}"
+    mv "$TEMPFILE" "$OUTDIR/$FILENAME"
 
 else
 
     # Calculate label height
-    LABELOFFSET=$(echo "${FONTSIZE}/2" | bc)
-    FONTSIZE=$(echo "${LABELOFFSET}*2" | bc)
-    LABELHEIGHT=$(echo "${FONTSIZE}*2" | bc)
+    LABELOFFSET=$(echo "$FONTSIZE/2" | bc)
+    FONTSIZE=$(echo "$LABELOFFSET*2" | bc)
+    LABELHEIGHT=$(echo "$FONTSIZE*2" | bc)
 
     # Logging
-    echo "Label fontsize: ${FONTSIZE}"
+    echo "Label fontsize: $FONTSIZE"
 
     # Invoke ImageMagick
-    convert -size ${WIDTH}x${LABELHEIGHT} -background '#0008' \
-        -fill white -pointsize ${FONTSIZE} -gravity center caption:"${TITLE}" \
-        "${TEMPFILE}" +swap -gravity south -composite \
-        "${OUTDIR}${FILENAME}"
+    convert \
+        -size "${WIDTH}x${LABELHEIGHT}" \
+        -background '#0008' -fill white -pointsize "$FONTSIZE" -gravity center caption:"$TITLE" \
+            "$TEMPFILE" +swap -gravity south -composite \
+            "$OUTDIR/$FILENAME"
 
     # Remove temporary file
-    rm "${TEMPFILE}"
+    rm -f "$TEMPFILE"
 
 fi
 
 # Logging
-KBYTES=$(echo "scale=1; $(stat -c %s "${OUTDIR}${FILENAME}")/1024" | bc -l)
-echo "Status: ok (${KBYTES} kB written)"
+KBYTES=$(echo "scale=1; $(stat -c %s "$OUTDIR/$FILENAME")/1024" | bc -l)
+echo "Status: ok ($KBYTES kB written)"

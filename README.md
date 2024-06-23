@@ -3,26 +3,27 @@
 Download the daily Bing wallpaper and save it to a given directory
 
 
-## Description
-
-This script downloads the current daily wallpaper offered by [Bing](https://www.bing.com/).
-
-
 ## Synopsis
 
 ```console
 $ bingdaily [OPTION]...
 ```
 
+
+## Description
+
+This script downloads the current daily wallpaper offered by [Bing](https://www.bing.com/).
+
+
 ## Options
 
-+ **-p** _path_
++ `-p` _path_
 
-  Changes the download folder.  The default download folder is set to the current working directory.
+  Change the download folder.  The default download folder is set to the current working directory.
 
-+ **-m** _market_
++ `-m` _market_
 
-  Selects the Bing market.
+  Select the Bing market:
 
   - `en-US`
   - `zh-CN`
@@ -33,17 +34,17 @@ $ bingdaily [OPTION]...
   - `en-NZ`
   - `en-CA`
 
-+ **-d** _day_
++ `-d` _day_
 
-  Selects the day of the Bing wallpaper:
+  Select the day of the Bing wallpaper:
 
   - `0` = today (default)
   - `1` = yesterday
   - `2` = etc.
 
-+ **-r** _resolution_
++ `-r` _resolution_
 
-  Selects the desired image resolution in pixels:
+  Select the desired image resolution in pixels:
 
   - `UHD` (default)
   - `1920x1280`
@@ -53,21 +54,21 @@ $ bingdaily [OPTION]...
   - `1024x768`
   - `800x600`
 
-+ **-s** _size_
++ `-s` _size_
 
-  Sets the font size of the wallpaper title added as annotation to the bottom of the wallpaper.  The default is `0` to not include any description.  This feature requires  [ImageMagick](https://www.imagemagick.org/) version 6.3.2 or later.  The value `size` can be set to one of the following:
+  Set the font size of the wallpaper title added as annotation to the bottom of the wallpaper.  The default is `0` to not include any description.  This feature requires  [ImageMagick](https://www.imagemagick.org/) version 6.3.2 or later.  The value `size` can be set to one of the following:
 
   - Positive values larger than `1` are interpreted as absolute integers in pixels.
   - Positive values smaller than `1` are applied as scaling factor to the image height of the Bing wallpaper.
   - Positive values with a trailing percentage sign are applied to the image height of the Bing wallpaper.
 
-+ **-y**
++ `-y`
 
-  Overwrite existing image files.
+  Overwrite existing image files
 
-+ **-h**
++ `-h`
 
-  Shows this help message.
+  Show this help message
 
 
 ## Exit codes
