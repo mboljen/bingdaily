@@ -1,6 +1,6 @@
 # bingdaily
 
-Download the daily Bing wallpaper and save it to a given directory
+Download the daily Bing wallpaper
 
 
 ## Synopsis
